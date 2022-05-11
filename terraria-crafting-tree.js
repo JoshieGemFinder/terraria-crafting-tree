@@ -7,6 +7,9 @@ let inGameItems; // An in-game item from the game or one of the supported mods
 let craftingStations; // A crafting station (anvil, furnace etc) and its sprite
 let selectableItems; // An item selectable at load which will serve as the central/top level item in the crafting tree
 
+let zipData; // Data containing the zipped archive
+let finalZip; // Final Zip file
+
 let statusSelectingItem = true; // The item selection screen is displayed
 let statusSelectingLayout = false; // The layout selection screen is displayed
 let statusClickDisabled = false; // Disables opening a wiki page or panning around, to avoid accidental clicks on loading the tree
@@ -46,6 +49,22 @@ function preload() {
     inGameItemsData = loadJSON("in-game-items.json");
     craftingTreeItemsData = loadJSON("crafting-tree-items.json");
     openSansBold = loadFont("open-sans-bold.ttf");
+    zipData = loadBytes("https://github.com/Carsmaniac/terraria-crafting-tree/archive/main.zip");
+}
+
+function getImageFromZip(zip, name) {
+    let file = zip.files["terraria-crafting-tree-main/images/" + name + ".png"]
+    let img = new p5.Image(1, 1)
+    file.async('Blob').then(blob => {
+        loadImage(URL.createObjectURL(blob), (img2) => {
+            let x = img2.width
+            let y = img2.height
+            img.resize(x, y)
+            img.copy(img2, 0, 0, x, y, 0, 0, x, y)
+            incrementSpritesLoaded()
+        })
+    })
+    return img
 }
 
 function setup() {
@@ -64,20 +83,24 @@ function setup() {
     selectableItems = craftingTreeItemsData.selectableItems;
     statusLoadingSprites = true;
     spritesTotal = selectableItems.length + craftingStations.length + layoutImageList.length;
-    for (let i = 0; i < selectableItems.length; i ++) {
-        for (inGameItem of inGameItems) {
-            if (inGameItem.name == selectableItems[i].name) {
-                selectableItems[i].inGameItem = inGameItem;
+    JSZip.loadAsync(new Blob([zipData.bytes])).then(zip => {
+        finalZip = zip;
+        for (let i = 0; i < selectableItems.length; i ++) {
+            for (inGameItem of inGameItems) {
+                if (inGameItem.name == selectableItems[i].name) {
+                    selectableItems[i].inGameItem = inGameItem;
+                }
             }
+            
+            selectableItems[i].sprite = getImageFromZip(zip, selectableItems[i].name);
         }
-        selectableItems[i].sprite = loadImage("images/" + selectableItems[i].name + ".png", incrementSpritesLoaded);
-    }
-    for (let i = 0; i < craftingStations.length; i ++) {
-        craftingStations[i].sprite = loadImage("images/" + craftingStations[i].name + ".png", incrementSpritesLoaded);
-    }
-    for (let i = 0; i < layoutImageList.length; i ++) {
-        layoutImages[layoutImageList[i]] = loadImage("images/layouts/" + layoutImageList[i] + ".png", incrementSpritesLoaded);
-    }
+        for (let i = 0; i < craftingStations.length; i ++) {
+            craftingStations[i].sprite = getImageFromZip(zip, craftingStations[i].name);
+        }
+        for (let i = 0; i < layoutImageList.length; i ++) {
+            layoutImages[layoutImageList[i]] = getImageFromZip(zip, "layouts/" + layoutImageList[i]);
+        }
+    })
 }
 
 function draw() {
@@ -437,9 +460,9 @@ function loadSprites() {
             if (treeItems[i].inGameItem.sprite == null) {
                 let newImage;
                 if (treeItems[i].inGameItem.name.substring(0, 4) == "any-") {
-                    newImage = loadImage("images/any.png", incrementSpritesLoaded);
+                    newImage = getImageFromZip(finalZip, "any");
                 } else {
-                    newImage = loadImage("images/" + treeItems[i].inGameItem.name + ".png", incrementSpritesLoaded);
+                    newImage = getImageFromZip(finalZip, treeItems[i].inGameItem.name);
                 }
                 treeItems[i].inGameItem.sprite = newImage;
                 inGameItems[treeItems[i].inGameItem.id].sprite = newImage;
