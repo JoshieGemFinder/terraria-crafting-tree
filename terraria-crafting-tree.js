@@ -332,9 +332,9 @@ function draw() {
         textSize(25 * zoomLevel);
         textAlign(LEFT);
         fill(255, 255, 255);
-        text("< Back", (-width / 2 + 12) * zoomLevel, (-height / 2 + 32) * zoomLevel);
+        text("< Back", (-width / 2 + 12) * zoomLevel + cameraPan.x, (-height / 2 + 32) * zoomLevel + cameraPan.y);
         fill(0, 0, 0);
-        text("< Back", (-width / 2 + 10) * zoomLevel, (-height / 2 + 30) * zoomLevel);
+        text("< Back", (-width / 2 + 10) * zoomLevel + cameraPan.x, (-height / 2 + 30) * zoomLevel + cameraPan.y);
         textAlign(CENTER);
     }
 }
@@ -371,7 +371,7 @@ function keyPressed() {
         }
     }
 }
-
+/*
 function mousePressed() {
     if (!statusDragging && !statusHoveringOverItem && !statusLoadingSprites && !statusSelectingItem && !statusClickDisabled) {
         // Make sure the mouse isn't over the back button
@@ -386,6 +386,13 @@ function mousePressed() {
 function mouseReleased() {
     if (statusDragging) {
         statusDragging = false;
+    }
+}*/
+
+function mouseDragged(event) {
+    if(mouseX <= width && mouseX >= 0 && mouseY <= height && mouseY >= 0) {
+        cameraPan.add(event.movementX, event.movementY)
+        draw()
     }
 }
 
