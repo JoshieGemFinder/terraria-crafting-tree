@@ -388,7 +388,7 @@ function mouseDragged(event) {
     if(mouseX <= width && mouseX >= 0 && mouseY <= height && mouseY >= 0 && enabled) {
         statusDragging = true
         cameraPan.sub(event.movementX, event.movementY)
-        draw()
+        redraw()
     }
 }
 
