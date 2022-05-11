@@ -381,18 +381,20 @@ function mousePressed() {
             statusDragging = true;
         }
     }
+}*/
+
+function mouseDragged(event) {
+    let enabled = !statusHoveringOverItem && !statusLoadingSprites && !statusClickDisabled
+    if(mouseX <= width && mouseX >= 0 && mouseY <= height && mouseY >= 0 && enabled) {
+        statusDragging = true
+        cameraPan.sub(event.movementX, event.movementY)
+        draw()
+    }
 }
 
 function mouseReleased() {
     if (statusDragging) {
         statusDragging = false;
-    }
-}*/
-
-function mouseDragged(event) {
-    if(mouseX <= width && mouseX >= 0 && mouseY <= height && mouseY >= 0) {
-        cameraPan.add(event.movementX, event.movementY)
-        draw()
     }
 }
 
