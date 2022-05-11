@@ -68,7 +68,7 @@ function getImageFromZip(zip, name) {
 }
 
 function setup() {
-    createCanvas(windowWidth, windowHeight, WEBGL);
+    createCanvas(Math.ceil(displayWidth / displayDensity()), Math.ceil(displayHeight / displayDensity()), WEBGL);
     frameRate(60);
 
     textFont(openSansBold);
@@ -340,7 +340,7 @@ function draw() {
 }
 
 function windowResized() {
-    resizeCanvas(windowWidth, windowHeight);
+    resizeCanvas(Math.ceil(displayWidth / displayDensity()), Math.ceil(displayHeight / displayDensity()));
     cameraHeight = (height/2) / tan(PI/6);
     cam.setPosition(cameraPan.x, cameraPan.y, cameraHeight);
 }
