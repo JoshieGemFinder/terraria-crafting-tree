@@ -332,9 +332,9 @@ function draw() {
         textSize(25 * zoomLevel);
         textAlign(LEFT);
         fill(255, 255, 255);
-        text("< Back", (-width / 2 + 12) * zoomLevel + cameraPan.x, (-height / 2 + 32) * zoomLevel + cameraPan.y);
+        text("< Back", (-width / 2 + 12) * zoomLevel, (-height / 2 + 32) * zoomLevel);
         fill(0, 0, 0);
-        text("< Back", (-width / 2 + 10) * zoomLevel + cameraPan.x, (-height / 2 + 30) * zoomLevel + cameraPan.y);
+        text("< Back", (-width / 2 + 10) * zoomLevel, (-height / 2 + 30) * zoomLevel);
         textAlign(CENTER);
     }
 }
