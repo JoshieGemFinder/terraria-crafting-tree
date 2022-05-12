@@ -390,7 +390,7 @@ function mouseDragged(event) {
     let enabled = !statusHoveringOverItem && !statusLoadingSprites && !statusClickDisabled
     if(mouseX <= width && mouseX >= 0 && mouseY <= height && mouseY >= 0 && enabled) {
         statusDragging = true
-        cameraPan.sub(event.movementX, event.movementY)
+        cameraPan.sub(event.movementX * zoomLevel, event.movementY * zoomLevel)
         redraw()
     }
 }
