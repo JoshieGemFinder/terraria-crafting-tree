@@ -7,6 +7,8 @@ let inGameItems; // An in-game item from the game or one of the supported mods
 let craftingStations; // A crafting station (anvil, furnace etc) and its sprite
 let selectableItems; // An item selectable at load which will serve as the central/top level item in the crafting tree
 
+let firstFrameDown = false; // Is this the first draw() the mouse has been pressed
+
 let zipData; // Data containing the zipped archive
 let finalZip; // Final Zip file
 
@@ -30,7 +32,7 @@ let cameraHeight; // Distance from the camera to the canvas, affects visual zoom
 let zoomLevel = 1; // Zoom percent relative to 1x, higher zooms out, affects cameraHeight
 let dragStart = new p5.Vector(); // Mouse position at the beginning of a drag
 let dragMouse = new p5.Vector(); // Mouse position during a drag, relative to dragStart and accounting for zoomLevel
-let panStart = new p5.Vector(); // cameraPan at the beginning of a drag
+let prevPan = new p5.Vector(); // cameraPan at the end of the last draw()
 let mousePos = new p5.Vector(); // Mouse position on the canvas, accounting for cameraPan and zoomLevel
 
 let firstLoadTime = 0; // frameCount when first loading a tree, determines when to fade out control toggle message
@@ -53,18 +55,19 @@ function preload() {
 }
 
 function getImageFromZip(zip, name) {
-    let file = zip.files["terraria-crafting-tree-main/images/" + name + ".png"]
-    let img = new p5.Image(1, 1)
-    file.async('Blob').then(blob => {
+    let file = zip.files["terraria-crafting-tree-main/images/" + name + ".png"];
+    let img = new p5.Image(1, 1);
+    file.async('Blob').then(data => {
+        let blob = new Blob([data], {type: "image/png"});
         loadImage(URL.createObjectURL(blob), (img2) => {
-            let x = img2.width
-            let y = img2.height
-            img.resize(x, y)
-            img.copy(img2, 0, 0, x, y, 0, 0, x, y)
-            incrementSpritesLoaded()
-        })
-    })
-    return img
+            let x = img2.width;
+            let y = img2.height;
+            img.resize(x, y);
+            img.copy(img2, 0, 0, x, y, 0, 0, x, y);
+            incrementSpritesLoaded();
+        });
+    });
+    return img;
 }
 
 function setup() {
@@ -108,11 +111,6 @@ function draw() {
 
     cam.setPosition(cameraPan.x, cameraPan.y, cameraHeight * zoomLevel);
 
-    if (statusDragging) {
-        dragMouse.x = (mouseX - dragStart.x) * zoomLevel;
-        cameraPan.set(panStart.x - ((mouseX - dragStart.x) * zoomLevel), panStart.y - ((mouseY - dragStart.y) * zoomLevel));
-    }
-
     topCorner.x = 0 - (width / 2) + cameraPan.x + (cameraPan.x * (-(zoomLevel - 1) / zoomLevel));
     topCorner.y = 0 - (height / 2) + cameraPan.y + (cameraPan.y * (-(zoomLevel - 1) / zoomLevel));
     topCorner.setMag(topCorner.mag() * zoomLevel);
@@ -121,6 +119,10 @@ function draw() {
     bottomCorner.setMag(bottomCorner.mag() * zoomLevel);
     mousePos.x = map(mouseX, 0, width, topCorner.x, bottomCorner.x);
     mousePos.y = map(mouseY, 0, height, topCorner.y, bottomCorner.y);
+    if(statusSelectingLayout) {
+        mousePos.x = map(mouseX, 0, width, topCorner.x - cameraPan.x, bottomCorner.x - cameraPan.x);
+        mousePos.y = map(mouseY, 0, height, topCorner.y - cameraPan.y, bottomCorner.y - cameraPan.y);
+    }
 
     // Display "Loading sprites" screen
     if (statusLoadingSprites) {
@@ -170,62 +172,67 @@ function draw() {
         cursor(ARROW);
         // Display layout selection screen
         if (statusSelectingLayout) {
-            fill(200, 200, 200, 70);
-            circle(0, 0, 30000);
-            fill(255);
-            rect(-400, -175, 800, 350);
-            fill(0);
-            text("Choose a crafting tree layout", 0, -100);
-            image(layoutImages["treeTop"], -360, -60, 120, 120);
-            image(layoutImages["treeLeft"], -210, -60, 120, 120);
-            image(layoutImages["treeBottom"], -60, -60, 120, 120);
-            image(layoutImages["treeRight"], 90, -60, 120, 120);
-            if (selectedItem.radial) {
-                image(layoutImages["radial"], 240, -60, 120, 120);
-            } else {
-                image(layoutImages["disabled"], 240, -60, 120, 120);
-            }
-            textSize(27);
-            fill(0);
-            if (mousePos.y < 50 && mousePos.y > -50) {
-                cursor("pointer");
-                if (mousePos.x < -250 && mousePos.x > -350) {
-                    selectedLayout = "treeTop";
-                    text("Tree with the final product at the top", 0, 120);
-                } else if (mousePos.x < -100 && mousePos.x > -200) {
-                    selectedLayout = "treeLeft";
-                    text("Tree with the final product on the left", 0, 120);
-                } else if (mousePos.x < 50 && mousePos.x > -50) {
-                    selectedLayout = "treeBottom";
-                    text("Tree with the final product at the bottom", 0, 120);
-                } else if (mousePos.x < 200 && mousePos.x > 100) {
-                    selectedLayout = "treeRight";
-                    text("Tree with the final product on the right", 0, 120);
-                } else if (mousePos.x < 350 && mousePos.x > 250) {
-                    if (selectedItem.radial) {
-                        selectedLayout = "radial";
-                        text("Radial tree with the final product in the centre", 0, 120);
-                    } else {
-                        selectedLayout = "disabled";
-                        fill(150);
-                        text("This crafting tree is too crowded for the radial layout", 0, 120);
-                    }
+            translate(cameraPan.x, cameraPan.y)
+            try {
+                fill(200, 200, 200, 70);
+                circle(0, 0, 30000);
+                fill(255);
+                rect(-400, -175, 800, 350);
+                fill(0);
+                text("Choose a crafting tree layout", 0, -100);
+                image(layoutImages["treeTop"], -360, -60, 120, 120);
+                image(layoutImages["treeLeft"], -210, -60, 120, 120);
+                image(layoutImages["treeBottom"], -60, -60, 120, 120);
+                image(layoutImages["treeRight"], 90, -60, 120, 120);
+                if (selectedItem.radial) {
+                    image(layoutImages["radial"], 240, -60, 120, 120);
                 } else {
-                    cursor(ARROW);
-                    selectedLayout = "";
+                    image(layoutImages["disabled"], 240, -60, 120, 120);
                 }
-            }
-            if (mouseIsPressed && !statusClickDisabled) {
-                if (mousePos.x > 400 || mousePos.x < -400 || mousePos.y > 175 || mousePos.y < -175) {
-                    statusSelectingLayout = false;
-                    statusClickDisabled = true;
-                } else if (selectedLayout != "" && selectedLayout != "disabled") {
-                    statusClickDisabled = true;
-                    statusSelectingItem = false;
-                    statusSelectingLayout = false;
-                    cursor(ARROW);
-                    loadCraftingTree();
+                textSize(27);
+                fill(0);
+                if (mousePos.y < 50 && mousePos.y > -50) {
+                    cursor("pointer");
+                    if (mousePos.x < -250 && mousePos.x > -350) {
+                        selectedLayout = "treeTop";
+                        text("Tree with the final product at the top", 0, 120);
+                    } else if (mousePos.x < -100 && mousePos.x > -200) {
+                        selectedLayout = "treeLeft";
+                        text("Tree with the final product on the left", 0, 120);
+                    } else if (mousePos.x < 50 && mousePos.x > -50) {
+                        selectedLayout = "treeBottom";
+                        text("Tree with the final product at the bottom", 0, 120);
+                    } else if (mousePos.x < 200 && mousePos.x > 100) {
+                        selectedLayout = "treeRight";
+                        text("Tree with the final product on the right", 0, 120);
+                    } else if (mousePos.x < 350 && mousePos.x > 250) {
+                        if (selectedItem.radial) {
+                            selectedLayout = "radial";
+                            text("Radial tree with the final product in the centre", 0, 120);
+                        } else {
+                            selectedLayout = "disabled";
+                            fill(150);
+                            text("This crafting tree is too crowded for the radial layout", 0, 120);
+                        }
+                    } else {
+                        cursor(ARROW);
+                        selectedLayout = "";
+                    }
                 }
+                if (mouseIsPressed && !statusClickDisabled) {
+                    if (mousePos.x > 400 || mousePos.x < -400 || mousePos.y > 175 || mousePos.y < -175) {
+                        statusSelectingLayout = false;
+                        statusClickDisabled = true;
+                    } else if (selectedLayout != "" && selectedLayout != "disabled") {
+                        statusClickDisabled = true;
+                        statusSelectingItem = false;
+                        statusSelectingLayout = false;
+                        cursor(ARROW);
+                        loadCraftingTree();
+                    }
+                }
+            } finally {
+                translate(-cameraPan.x, -cameraPan.y)
             }
         } else if (selectedItem != null) {
             cursor("pointer");
@@ -248,7 +255,7 @@ function draw() {
             text(selectedItem.displayName, selectedItem.position.x, selectedItem.position.y + selectedItem.scaledHeight * 0.25 + 100);
             textSize(20);
             text(selectedItem.modName, selectedItem.position.x, selectedItem.position.y + selectedItem.scaledHeight * 0.25 + 130);
-            if (mouseIsPressed && !statusClickDisabled) {
+            if (mouseIsPressed && !statusClickDisabled && firstFrameDown) {
                 statusSelectingLayout = true;
                 statusClickDisabled = true;
                 cursor(ARROW);
@@ -337,6 +344,8 @@ function draw() {
         text("< Back", (-width / 2 + 10) * zoomLevel + cameraPan.x, (-height / 2 + 30) * zoomLevel + cameraPan.y);
         textAlign(CENTER);
     }
+    prevPan.set(cameraPan);
+    firstFrameDown = false;
 }
 
 function windowResized() {
@@ -371,17 +380,11 @@ function keyPressed() {
         }
     }
 }
-/*
+
 function mousePressed() {
-    if (!statusDragging && !statusHoveringOverItem && !statusLoadingSprites && !statusSelectingItem && !statusClickDisabled) {
-        // Make sure the mouse isn't over the back button
-        if (!((mousePos.x < (-width / 2 + 112) * zoomLevel + cameraPan.x && mousePos.y < (-height / 2 + 42) * zoomLevel + cameraPan.y))) {
-            dragStart.set(mouseX, mouseY);
-            panStart.set(cameraPan);
-            statusDragging = true;
-        }
-    }
-}*/
+    firstFrameDown = true;
+    redraw();
+}
 
 function mouseDragged(event) {
     let enabled = !statusHoveringOverItem && !statusLoadingSprites && !statusClickDisabled
