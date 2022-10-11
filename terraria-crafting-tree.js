@@ -351,7 +351,7 @@ function draw() {
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
     cameraHeight = (height/2) / tan(PI/6);
-    cam.setPosition(cameraPan.x, cameraPan.y, cameraHeight);
+    if(cam != null) { cam.setPosition(cameraPan.x, cameraPan.y, cameraHeight); }
 }
 
 function keyPressed() {
