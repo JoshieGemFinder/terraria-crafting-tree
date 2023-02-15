@@ -51,7 +51,7 @@ function preload() {
     inGameItemsData = loadJSON("in-game-items.json");
     craftingTreeItemsData = loadJSON("crafting-tree-items.json");
     openSansBold = loadFont("open-sans-bold.ttf");
-    zipData = loadBytes("https://codeload.github.com/Carsmaniac/terraria-crafting-tree/zip/refs/heads/main");//loadBytes("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://codeload.github.com/Carsmaniac/terraria-crafting-tree/zip/refs/heads/main"));
+    zipData = loadBytes("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://codeload.github.com/Carsmaniac/terraria-crafting-tree/zip/refs/heads/main"));
 }
 
 function getImageFromZip(zip, name) {
