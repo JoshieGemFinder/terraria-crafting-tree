@@ -51,7 +51,9 @@ function preload() {
     inGameItemsData = loadJSON("in-game-items.json");
     craftingTreeItemsData = loadJSON("crafting-tree-items.json");
     openSansBold = loadFont("open-sans-bold.ttf");
-    zipData = loadBytes("https://cors-anywhere.herokuapp.com/" + encodeURI("https://codeload.github.com/Carsmaniac/terraria-crafting-tree/zip/refs/heads/main"));
+    //I hope they allow CORS eventually
+    zipData = loadBytes("https://github.com/JoshieGemFinder/terraria-crafting-tree/archive/refs/heads/main.zip");
+    //zipData = loadBytes("https://cors-anywhere.herokuapp.com/" + encodeURI("https://codeload.github.com/Carsmaniac/terraria-crafting-tree/zip/refs/heads/main"));
     //zipData = loadBytes("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://codeload.github.com/Carsmaniac/terraria-crafting-tree/zip/refs/heads/main"));
 }
 
